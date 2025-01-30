@@ -21,6 +21,16 @@ interface WorkflowRun {
   jobs_url: string;
 }
 
+interface Step {
+  name: string;
+  status: string;
+  conclusion: string;
+  number: number;
+  started_at: string;
+  completed_at: string;
+  log?: string;
+}
+
 interface Job {
   id: number;
   name: string;
@@ -28,13 +38,7 @@ interface Job {
   conclusion: string;
   started_at: string;
   completed_at: string;
-  steps: Array<{
-    name: string;
-    status: string;
-    conclusion: string;
-    number: number;
-    log?: string;
-  }>;
+  steps: Step[];
 }
 
 interface PaginationInfo {
@@ -58,6 +62,11 @@ export default function BuildHistoryPage() {
     current_page: 1,
     total_pages: 1,
   });
+  const [expandedSteps, setExpandedSteps] = useState<Record<string, boolean>>(
+    {}
+  );
+  const [stepLogs, setStepLogs] = useState<Record<string, string>>({});
+  const [loadingSteps, setLoadingSteps] = useState<Record<string, boolean>>({});
 
   const page = Number(searchParams.get("page")) || 1;
   const per_page = 10;
@@ -138,6 +147,63 @@ export default function BuildHistoryPage() {
 
   const handlePageChange = (newPage: number) => {
     router.push(`/repository/${params.owner}/${params.name}?page=${newPage}`);
+  };
+
+  const fetchStepLogs = async (
+    runId: number,
+    jobId: number,
+    stepNumber: number
+  ) => {
+    if (!session?.accessToken) return;
+
+    const stepKey = `${runId}-${jobId}-${stepNumber}`;
+    setLoadingSteps((prev) => ({ ...prev, [stepKey]: true }));
+
+    try {
+      const octokit = new Octokit({
+        auth: session.accessToken,
+      });
+
+      const response = await octokit.actions.downloadJobLogsForWorkflowRun({
+        owner: params.owner as string,
+        repo: params.name as string,
+        job_id: jobId,
+      });
+
+      // The response is a blob of text containing all logs
+      const logText = await response.data;
+
+      // For now, we'll just show the raw logs
+      // In a production app, you might want to parse and format these logs
+      setStepLogs((prev) => ({
+        ...prev,
+        [stepKey]: logText,
+      }));
+    } catch (error) {
+      console.error("Error fetching step logs:", error);
+      setStepLogs((prev) => ({
+        ...prev,
+        [stepKey]: "Failed to load logs. Please try again.",
+      }));
+    } finally {
+      setLoadingSteps((prev) => ({ ...prev, [stepKey]: false }));
+    }
+  };
+
+  const toggleStep = async (
+    runId: number,
+    jobId: number,
+    stepNumber: number
+  ) => {
+    const stepKey = `${runId}-${jobId}-${stepNumber}`;
+    setExpandedSteps((prev) => ({
+      ...prev,
+      [stepKey]: !prev[stepKey],
+    }));
+
+    if (!stepLogs[stepKey]) {
+      await fetchStepLogs(runId, jobId, stepNumber);
+    }
   };
 
   if (loading) {
@@ -288,22 +354,98 @@ export default function BuildHistoryPage() {
                               {job.steps.map((step) => (
                                 <div
                                   key={step.number}
-                                  className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-md"
+                                  className="border border-gray-200 rounded-md overflow-hidden"
                                 >
-                                  <span className="text-sm font-medium text-gray-700">
-                                    {step.name}
-                                  </span>
-                                  <span
-                                    className={`px-2 py-0.5 text-xs font-medium rounded-full ${
-                                      step.conclusion === "success"
-                                        ? "bg-green-100 text-green-700 border border-green-200"
-                                        : step.conclusion === "failure"
-                                        ? "bg-red-100 text-red-700 border border-red-200"
-                                        : "bg-gray-100 text-gray-700 border border-gray-200"
-                                    }`}
+                                  <button
+                                    onClick={() =>
+                                      toggleStep(run.id, job.id, step.number)
+                                    }
+                                    className="w-full flex items-center justify-between py-2 px-3 bg-gray-50 hover:bg-gray-100 transition-colors duration-200"
                                   >
-                                    {step.conclusion}
-                                  </span>
+                                    <div className="flex items-center space-x-2">
+                                      <svg
+                                        className={`w-4 h-4 text-gray-500 transform transition-transform ${
+                                          expandedSteps[
+                                            `${run.id}-${job.id}-${step.number}`
+                                          ]
+                                            ? "rotate-90"
+                                            : ""
+                                        }`}
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={2}
+                                          d="M9 5l7 7-7 7"
+                                        />
+                                      </svg>
+                                      <span className="text-sm font-medium text-gray-700">
+                                        {step.name}
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center space-x-3">
+                                      {step.started_at && step.completed_at && (
+                                        <span className="text-xs text-gray-500">
+                                          {formatDuration(
+                                            step.started_at,
+                                            step.completed_at
+                                          )}
+                                        </span>
+                                      )}
+                                      <span
+                                        className={`px-2 py-0.5 text-xs font-medium rounded-full ${
+                                          step.conclusion === "success"
+                                            ? "bg-green-100 text-green-700 border border-green-200"
+                                            : step.conclusion === "failure"
+                                            ? "bg-red-100 text-red-700 border border-red-200"
+                                            : "bg-gray-100 text-gray-700 border border-gray-200"
+                                        }`}
+                                      >
+                                        {step.conclusion}
+                                      </span>
+                                    </div>
+                                  </button>
+
+                                  {expandedSteps[
+                                    `${run.id}-${job.id}-${step.number}`
+                                  ] && (
+                                    <div className="border-t border-gray-200 p-4">
+                                      {loadingSteps[
+                                        `${run.id}-${job.id}-${step.number}`
+                                      ] ? (
+                                        <div className="flex justify-center py-4">
+                                          <div className="animate-spin rounded-full h-5 w-5 border-2 border-gray-900 border-b-transparent"></div>
+                                        </div>
+                                      ) : (
+                                        <div className="space-y-4">
+                                          <div className="flex justify-between text-sm text-gray-600">
+                                            <div>
+                                              Started:{" "}
+                                              {new Date(
+                                                step.started_at
+                                              ).toLocaleString()}
+                                            </div>
+                                            <div>
+                                              Completed:{" "}
+                                              {new Date(
+                                                step.completed_at
+                                              ).toLocaleString()}
+                                            </div>
+                                          </div>
+                                          <div className="bg-gray-900 text-gray-100 rounded-md p-4 font-mono text-sm overflow-x-auto">
+                                            <pre className="whitespace-pre-wrap">
+                                              {stepLogs[
+                                                `${run.id}-${job.id}-${step.number}`
+                                              ] || "No logs available"}
+                                            </pre>
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
                                 </div>
                               ))}
                             </div>
