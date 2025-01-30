@@ -50,6 +50,11 @@ export default function DashboardPage() {
     }
   }, [session, status, router]);
 
+  const getRepoOwner = (html_url: string) => {
+    const parts = html_url.split("/");
+    return parts[parts.length - 2];
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -88,11 +93,9 @@ export default function DashboardPage() {
             {repositories.map((repo) => (
               <a
                 key={repo.id}
-                href={repo.html_url}
-                target="_blank"
-                rel="noopener noreferrer"
+                href={`/repository/${getRepoOwner(repo.html_url)}/${repo.name}`}
                 className="block p-6 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200"
-                aria-label={`View ${repo.name} repository`}
+                aria-label={`View ${repo.name} build history`}
               >
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-medium text-gray-900">
