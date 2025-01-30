@@ -48,6 +48,7 @@ interface PaginationInfo {
 interface RouteParams {
   owner: string;
   name: string;
+  [key: string]: string | string[] | undefined;
 }
 
 export default function BuildHistoryPage() {
