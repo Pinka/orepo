@@ -3,7 +3,8 @@
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { Octokit } from "@octokit/rest";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams, useRouter } from "next/navigation";
+import Link from "next/link";
 
 interface WorkflowRun {
   id: number;
@@ -19,11 +20,27 @@ interface WorkflowRun {
   html_url: string;
 }
 
+interface PaginationInfo {
+  total_count: number;
+  current_page: number;
+  total_pages: number;
+}
+
 export default function BuildHistoryPage() {
   const { data: session } = useSession();
   const params = useParams();
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [workflowRuns, setWorkflowRuns] = useState<WorkflowRun[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pagination, setPagination] = useState<PaginationInfo>({
+    total_count: 0,
+    current_page: 1,
+    total_pages: 1,
+  });
+
+  const page = Number(searchParams.get("page")) || 1;
+  const per_page = 10;
 
   useEffect(() => {
     if (session?.accessToken) {
@@ -35,10 +52,16 @@ export default function BuildHistoryPage() {
         .listWorkflowRunsForRepo({
           owner: params.owner as string,
           repo: params.name as string,
-          per_page: 10,
+          per_page,
+          page,
         })
         .then((response) => {
           setWorkflowRuns(response.data.workflow_runs);
+          setPagination({
+            total_count: response.data.total_count,
+            current_page: page,
+            total_pages: Math.ceil(response.data.total_count / per_page),
+          });
           setLoading(false);
         })
         .catch((error: Error) => {
@@ -46,7 +69,11 @@ export default function BuildHistoryPage() {
           setLoading(false);
         });
     }
-  }, [session, params]);
+  }, [session, params, page]);
+
+  const handlePageChange = (newPage: number) => {
+    router.push(`/repository/${params.owner}/${params.name}?page=${newPage}`);
+  };
 
   if (loading) {
     return (
@@ -61,7 +88,14 @@ export default function BuildHistoryPage() {
       <nav className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
-            <div className="flex items-center">
+            <div className="flex items-center space-x-4">
+              <Link
+                href="/dashboard"
+                className="text-gray-500 hover:text-gray-700"
+                aria-label="Back to dashboard"
+              >
+                ← Back
+              </Link>
               <h1 className="text-2xl font-bold text-gray-900">
                 {params.owner}/{params.name}
               </h1>
@@ -72,9 +106,15 @@ export default function BuildHistoryPage() {
 
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            Build History
-          </h2>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold text-gray-900">
+              Build History
+            </h2>
+            <p className="text-sm text-gray-600">
+              Showing page {pagination.current_page} of {pagination.total_pages}
+            </p>
+          </div>
+
           <div className="space-y-4">
             {workflowRuns.map((run) => (
               <a
@@ -116,6 +156,27 @@ export default function BuildHistoryPage() {
               </div>
             )}
           </div>
+
+          {pagination.total_pages > 1 && (
+            <div className="mt-8 flex justify-center space-x-4">
+              <button
+                onClick={() => handlePageChange(pagination.current_page - 1)}
+                disabled={pagination.current_page === 1}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                aria-label="Previous page"
+              >
+                Previous
+              </button>
+              <button
+                onClick={() => handlePageChange(pagination.current_page + 1)}
+                disabled={pagination.current_page === pagination.total_pages}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                aria-label="Next page"
+              >
+                Next
+              </button>
+            </div>
+          )}
         </div>
       </main>
     </div>
