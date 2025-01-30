@@ -27,11 +27,11 @@ interface WorkflowRun {
 
 interface Step {
   name: string;
-  status: string;
-  conclusion: string;
+  status: "queued" | "in_progress" | "completed";
+  conclusion: string | null;
   number: number;
-  started_at: string;
-  completed_at: string;
+  started_at?: string | null;
+  completed_at?: string | null;
 }
 
 interface Job {
@@ -41,7 +41,7 @@ interface Job {
   conclusion: string | null;
   started_at: string;
   completed_at: string | null;
-  steps: Step[];
+  steps?: Step[];
 }
 
 interface PaginationInfo {
@@ -364,7 +364,7 @@ export default function BuildHistoryPage() {
                               </div>
                             </div>
                             <div className="space-y-2">
-                              {job.steps.map((step) => (
+                              {job.steps?.map((step) => (
                                 <div
                                   key={step.number}
                                   className="border border-gray-200 rounded-md overflow-hidden"
@@ -438,13 +438,13 @@ export default function BuildHistoryPage() {
                                             <div>
                                               Started:{" "}
                                               {new Date(
-                                                step.started_at
+                                                step.started_at || ""
                                               ).toLocaleString()}
                                             </div>
                                             <div>
                                               Completed:{" "}
                                               {new Date(
-                                                step.completed_at
+                                                step.completed_at || ""
                                               ).toLocaleString()}
                                             </div>
                                           </div>
