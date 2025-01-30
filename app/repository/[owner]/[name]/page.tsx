@@ -13,15 +13,15 @@ interface ExtendedSession extends Session {
 
 interface WorkflowRun {
   id: number;
-  name: string | null | undefined;
-  status: string;
+  name?: string | null;
+  status?: string | null;
   conclusion: string | null;
   created_at: string;
   updated_at: string;
   head_commit: {
     message: string;
     id: string;
-  };
+  } | null;
   html_url: string;
 }
 
@@ -289,7 +289,7 @@ export default function BuildHistoryPage() {
                         {run.name}
                       </h3>
                       <p className="mt-1 text-sm text-gray-700 line-clamp-2">
-                        {run.head_commit.message}
+                        {run.head_commit?.message}
                       </p>
                     </div>
                     <div className="flex items-center space-x-4 ml-4">
