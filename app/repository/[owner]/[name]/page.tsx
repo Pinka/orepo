@@ -150,16 +150,29 @@ export default function BuildHistoryPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm">
+      <nav className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center space-x-4">
               <Link
                 href="/dashboard"
-                className="text-gray-500 hover:text-gray-700"
+                className="inline-flex items-center text-gray-700 hover:text-gray-900 font-medium"
                 aria-label="Back to dashboard"
               >
-                ← Back
+                <svg
+                  className="w-5 h-5 mr-1"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                  />
+                </svg>
+                Back
               </Link>
               <h1 className="text-2xl font-bold text-gray-900">
                 {params.owner}/{params.name}
@@ -169,53 +182,51 @@ export default function BuildHistoryPage() {
         </div>
       </nav>
 
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold text-gray-900">
-              Build History
-            </h2>
+      <main className="max-w-7xl mx-auto py-8 sm:px-6 lg:px-8">
+        <div className="px-4 sm:px-0">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-gray-900">Build History</h2>
             {pagination.total_pages > 0 && (
-              <p className="text-sm text-gray-600">
+              <p className="text-sm font-medium text-gray-700">
                 Showing page {pagination.current_page} of{" "}
                 {pagination.total_pages}
               </p>
             )}
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-6">
             {workflowRuns.map((run) => (
               <div
                 key={run.id}
-                className="bg-white rounded-lg shadow-sm overflow-hidden"
+                className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden transition-all duration-200 hover:shadow-md"
               >
                 <button
                   onClick={() => handleRunClick(run.id)}
-                  className="w-full text-left p-6 hover:bg-gray-50 transition-colors duration-200"
+                  className="w-full text-left p-6"
                 >
                   <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-lg font-medium text-gray-900">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-lg font-semibold text-gray-900 truncate">
                         {run.name}
                       </h3>
-                      <p className="text-sm text-gray-600 mt-1">
+                      <p className="mt-1 text-sm text-gray-700 line-clamp-2">
                         {run.head_commit.message}
                       </p>
                     </div>
-                    <div className="flex items-center space-x-4">
+                    <div className="flex items-center space-x-4 ml-4">
                       <span
-                        className={`px-3 py-1 text-sm rounded-full ${
+                        className={`px-3 py-1 text-sm font-medium rounded-full ${
                           run.conclusion === "success"
-                            ? "bg-green-100 text-green-800"
+                            ? "bg-green-100 text-green-700 border border-green-200"
                             : run.conclusion === "failure"
-                            ? "bg-red-100 text-red-800"
-                            : "bg-gray-100 text-gray-800"
+                            ? "bg-red-100 text-red-700 border border-red-200"
+                            : "bg-gray-100 text-gray-700 border border-gray-200"
                         }`}
                       >
                         {run.conclusion || run.status}
                       </span>
                       <svg
-                        className={`w-5 h-5 transform transition-transform ${
+                        className={`w-5 h-5 text-gray-400 transform transition-transform ${
                           expandedRun === run.id ? "rotate-180" : ""
                         }`}
                         fill="none"
@@ -231,39 +242,41 @@ export default function BuildHistoryPage() {
                       </svg>
                     </div>
                   </div>
-                  <div className="mt-4 text-sm text-gray-500">
+                  <div className="mt-4 text-sm text-gray-600">
                     Started: {new Date(run.created_at).toLocaleString()}
                   </div>
                 </button>
 
                 {expandedRun === run.id && (
-                  <div className="border-t border-gray-200 p-6">
+                  <div className="border-t border-gray-200 bg-gray-50 p-6">
                     {loadingJobs[run.id] ? (
                       <div className="flex justify-center py-4">
-                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900"></div>
+                        <div className="animate-spin rounded-full h-6 w-6 border-2 border-gray-900 border-b-transparent"></div>
                       </div>
                     ) : (
                       <div className="space-y-4">
                         {jobDetails[run.id]?.map((job) => (
                           <div
                             key={job.id}
-                            className="border rounded-lg p-4 bg-gray-50"
+                            className="bg-white border border-gray-200 rounded-lg p-4"
                           >
-                            <div className="flex items-center justify-between mb-2">
-                              <h4 className="font-medium">{job.name}</h4>
-                              <div className="flex items-center space-x-2">
+                            <div className="flex items-center justify-between mb-3">
+                              <h4 className="text-base font-semibold text-gray-900">
+                                {job.name}
+                              </h4>
+                              <div className="flex items-center space-x-3">
                                 <span
-                                  className={`px-2 py-1 text-xs rounded-full ${
+                                  className={`px-2.5 py-1 text-xs font-medium rounded-full ${
                                     job.conclusion === "success"
-                                      ? "bg-green-100 text-green-800"
+                                      ? "bg-green-100 text-green-700 border border-green-200"
                                       : job.conclusion === "failure"
-                                      ? "bg-red-100 text-red-800"
-                                      : "bg-gray-100 text-gray-800"
+                                      ? "bg-red-100 text-red-700 border border-red-200"
+                                      : "bg-gray-100 text-gray-700 border border-gray-200"
                                   }`}
                                 >
                                   {job.conclusion}
                                 </span>
-                                <span className="text-xs text-gray-500">
+                                <span className="text-xs font-medium text-gray-600">
                                   {formatDuration(
                                     job.started_at,
                                     job.completed_at
@@ -275,16 +288,18 @@ export default function BuildHistoryPage() {
                               {job.steps.map((step) => (
                                 <div
                                   key={step.number}
-                                  className="text-sm flex items-center justify-between"
+                                  className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-md"
                                 >
-                                  <span>{step.name}</span>
+                                  <span className="text-sm font-medium text-gray-700">
+                                    {step.name}
+                                  </span>
                                   <span
-                                    className={`px-2 py-0.5 text-xs rounded-full ${
+                                    className={`px-2 py-0.5 text-xs font-medium rounded-full ${
                                       step.conclusion === "success"
-                                        ? "bg-green-100 text-green-800"
+                                        ? "bg-green-100 text-green-700 border border-green-200"
                                         : step.conclusion === "failure"
-                                        ? "bg-red-100 text-red-800"
-                                        : "bg-gray-100 text-gray-800"
+                                        ? "bg-red-100 text-red-700 border border-red-200"
+                                        : "bg-gray-100 text-gray-700 border border-gray-200"
                                     }`}
                                   >
                                     {step.conclusion}
@@ -299,9 +314,22 @@ export default function BuildHistoryPage() {
                             href={run.html_url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-sm text-gray-600 hover:text-gray-900"
+                            className="inline-flex items-center text-sm font-medium text-gray-700 hover:text-gray-900"
                           >
-                            View on GitHub →
+                            View on GitHub
+                            <svg
+                              className="ml-1 w-4 h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                              />
+                            </svg>
                           </a>
                         </div>
                       </div>
@@ -311,8 +339,10 @@ export default function BuildHistoryPage() {
               </div>
             ))}
             {workflowRuns.length === 0 && (
-              <div className="text-center py-12 bg-white rounded-lg">
-                <p className="text-gray-500">No workflow runs found</p>
+              <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
+                <p className="text-gray-700 font-medium">
+                  No workflow runs found
+                </p>
               </div>
             )}
           </div>
@@ -322,7 +352,7 @@ export default function BuildHistoryPage() {
               <button
                 onClick={() => handlePageChange(pagination.current_page - 1)}
                 disabled={pagination.current_page === 1}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
                 aria-label="Previous page"
               >
                 Previous
@@ -330,7 +360,7 @@ export default function BuildHistoryPage() {
               <button
                 onClick={() => handlePageChange(pagination.current_page + 1)}
                 disabled={pagination.current_page === pagination.total_pages}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
                 aria-label="Next page"
               >
                 Next
