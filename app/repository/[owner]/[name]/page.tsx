@@ -38,9 +38,9 @@ interface Job {
   id: number;
   name: string;
   status: string;
-  conclusion: string;
+  conclusion: string | null;
   started_at: string;
-  completed_at: string;
+  completed_at: string | null;
   steps: Step[];
 }
 
@@ -150,7 +150,8 @@ export default function BuildHistoryPage() {
     }
   };
 
-  const formatDuration = (start: string, end: string) => {
+  const formatDuration = (start: string, end: string | null) => {
+    if (!end) return "N/A";
     const duration = new Date(end).getTime() - new Date(start).getTime();
     const minutes = Math.floor(duration / 60000);
     const seconds = Math.floor((duration % 60000) / 1000);
@@ -189,7 +190,7 @@ export default function BuildHistoryPage() {
       // In a production app, you might want to parse and format these logs
       setStepLogs((prev) => ({
         ...prev,
-        [stepKey]: logText,
+        [stepKey]: typeof logText === "string" ? logText : "No logs available",
       }));
     } catch (error) {
       console.error("Error fetching step logs:", error);
