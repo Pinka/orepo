@@ -5,10 +5,15 @@ import { useEffect, useState } from "react";
 import { Octokit } from "@octokit/rest";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import type { Session } from "next-auth";
+
+interface ExtendedSession extends Session {
+  accessToken?: string;
+}
 
 interface WorkflowRun {
   id: number;
-  name: string;
+  name: string | null | undefined;
   status: string;
   conclusion: string | null;
   created_at: string;
@@ -52,7 +57,10 @@ interface RouteParams {
 }
 
 export default function BuildHistoryPage() {
-  const { data: session } = useSession();
+  const { data: session } = useSession() as {
+    data: ExtendedSession | null;
+    status: string;
+  };
   const params = useParams<RouteParams>();
   const searchParams = useSearchParams();
   const router = useRouter();
