@@ -1,8 +1,9 @@
 import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
+import type { NextRequestWithAuth } from "next-auth/middleware";
 
 export default withAuth(
-  function middleware(req) {
+  function middleware(req: NextRequestWithAuth) {
     const isAuthenticated = !!req.nextauth.token;
     const isAuthPage = req.nextUrl.pathname.startsWith("/login");
     const isHomePage = req.nextUrl.pathname === "/";

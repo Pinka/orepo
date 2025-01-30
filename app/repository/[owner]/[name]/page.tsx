@@ -18,7 +18,6 @@ interface WorkflowRun {
     id: string;
   };
   html_url: string;
-  jobs_url: string;
 }
 
 interface Step {
@@ -28,7 +27,6 @@ interface Step {
   number: number;
   started_at: string;
   completed_at: string;
-  log?: string;
 }
 
 interface Job {
@@ -47,9 +45,14 @@ interface PaginationInfo {
   total_pages: number;
 }
 
+interface RouteParams {
+  owner: string;
+  name: string;
+}
+
 export default function BuildHistoryPage() {
   const { data: session } = useSession();
-  const params = useParams();
+  const params = useParams<RouteParams>();
   const searchParams = useSearchParams();
   const router = useRouter();
   const [workflowRuns, setWorkflowRuns] = useState<WorkflowRun[]>([]);
@@ -79,8 +82,8 @@ export default function BuildHistoryPage() {
 
       octokit.actions
         .listWorkflowRunsForRepo({
-          owner: params.owner as string,
-          repo: params.name as string,
+          owner: params.owner,
+          repo: params.name,
           per_page,
           page,
         })
@@ -111,8 +114,8 @@ export default function BuildHistoryPage() {
       });
 
       const response = await octokit.actions.listJobsForWorkflowRun({
-        owner: params.owner as string,
-        repo: params.name as string,
+        owner: params.owner,
+        repo: params.name,
         run_id: runId,
       });
 
@@ -165,8 +168,8 @@ export default function BuildHistoryPage() {
       });
 
       const response = await octokit.actions.downloadJobLogsForWorkflowRun({
-        owner: params.owner as string,
-        repo: params.name as string,
+        owner: params.owner,
+        repo: params.name,
         job_id: jobId,
       });
 
