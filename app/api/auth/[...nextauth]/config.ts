@@ -30,7 +30,13 @@ export const authOptions: NextAuthOptions = {
       }
       return token;
     },
-    async session({ session, token }): Promise<ExtendedSession> {
+    async session({
+      session,
+      token,
+    }: {
+      session: Session;
+      token: ExtendedToken;
+    }): Promise<ExtendedSession> {
       const extendedSession = session as ExtendedSession;
       extendedSession.accessToken = token.accessToken;
       return extendedSession;
