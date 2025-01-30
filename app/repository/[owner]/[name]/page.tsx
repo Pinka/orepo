@@ -18,6 +18,23 @@ interface WorkflowRun {
     id: string;
   };
   html_url: string;
+  jobs_url: string;
+}
+
+interface Job {
+  id: number;
+  name: string;
+  status: string;
+  conclusion: string;
+  started_at: string;
+  completed_at: string;
+  steps: Array<{
+    name: string;
+    status: string;
+    conclusion: string;
+    number: number;
+    log?: string;
+  }>;
 }
 
 interface PaginationInfo {
@@ -32,7 +49,10 @@ export default function BuildHistoryPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [workflowRuns, setWorkflowRuns] = useState<WorkflowRun[]>([]);
+  const [expandedRun, setExpandedRun] = useState<number | null>(null);
+  const [jobDetails, setJobDetails] = useState<Record<number, Job[]>>({});
   const [loading, setLoading] = useState(true);
+  const [loadingJobs, setLoadingJobs] = useState<Record<number, boolean>>({});
   const [pagination, setPagination] = useState<PaginationInfo>({
     total_count: 0,
     current_page: 1,
@@ -70,6 +90,51 @@ export default function BuildHistoryPage() {
         });
     }
   }, [session, params, page]);
+
+  const fetchJobDetails = async (runId: number) => {
+    if (!session?.accessToken) return;
+
+    setLoadingJobs((prev) => ({ ...prev, [runId]: true }));
+
+    try {
+      const octokit = new Octokit({
+        auth: session.accessToken,
+      });
+
+      const response = await octokit.actions.listJobsForWorkflowRun({
+        owner: params.owner as string,
+        repo: params.name as string,
+        run_id: runId,
+      });
+
+      setJobDetails((prev) => ({
+        ...prev,
+        [runId]: response.data.jobs,
+      }));
+    } catch (error) {
+      console.error("Error fetching job details:", error);
+    } finally {
+      setLoadingJobs((prev) => ({ ...prev, [runId]: false }));
+    }
+  };
+
+  const handleRunClick = async (runId: number) => {
+    if (expandedRun === runId) {
+      setExpandedRun(null);
+    } else {
+      setExpandedRun(runId);
+      if (!jobDetails[runId]) {
+        await fetchJobDetails(runId);
+      }
+    }
+  };
+
+  const formatDuration = (start: string, end: string) => {
+    const duration = new Date(end).getTime() - new Date(start).getTime();
+    const minutes = Math.floor(duration / 60000);
+    const seconds = Math.floor((duration % 60000) / 1000);
+    return `${minutes}m ${seconds}s`;
+  };
 
   const handlePageChange = (newPage: number) => {
     router.push(`/repository/${params.owner}/${params.name}?page=${newPage}`);
@@ -110,45 +175,140 @@ export default function BuildHistoryPage() {
             <h2 className="text-xl font-semibold text-gray-900">
               Build History
             </h2>
-            <p className="text-sm text-gray-600">
-              Showing page {pagination.current_page} of {pagination.total_pages}
-            </p>
+            {pagination.total_pages > 0 && (
+              <p className="text-sm text-gray-600">
+                Showing page {pagination.current_page} of{" "}
+                {pagination.total_pages}
+              </p>
+            )}
           </div>
 
           <div className="space-y-4">
             {workflowRuns.map((run) => (
-              <a
+              <div
                 key={run.id}
-                href={run.html_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 p-6"
+                className="bg-white rounded-lg shadow-sm overflow-hidden"
               >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-lg font-medium text-gray-900">
-                      {run.name}
-                    </h3>
-                    <p className="text-sm text-gray-600 mt-1">
-                      {run.head_commit.message}
-                    </p>
+                <button
+                  onClick={() => handleRunClick(run.id)}
+                  className="w-full text-left p-6 hover:bg-gray-50 transition-colors duration-200"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-lg font-medium text-gray-900">
+                        {run.name}
+                      </h3>
+                      <p className="text-sm text-gray-600 mt-1">
+                        {run.head_commit.message}
+                      </p>
+                    </div>
+                    <div className="flex items-center space-x-4">
+                      <span
+                        className={`px-3 py-1 text-sm rounded-full ${
+                          run.conclusion === "success"
+                            ? "bg-green-100 text-green-800"
+                            : run.conclusion === "failure"
+                            ? "bg-red-100 text-red-800"
+                            : "bg-gray-100 text-gray-800"
+                        }`}
+                      >
+                        {run.conclusion || run.status}
+                      </span>
+                      <svg
+                        className={`w-5 h-5 transform transition-transform ${
+                          expandedRun === run.id ? "rotate-180" : ""
+                        }`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 9l-7 7-7-7"
+                        />
+                      </svg>
+                    </div>
                   </div>
-                  <span
-                    className={`px-3 py-1 text-sm rounded-full ${
-                      run.conclusion === "success"
-                        ? "bg-green-100 text-green-800"
-                        : run.conclusion === "failure"
-                        ? "bg-red-100 text-red-800"
-                        : "bg-gray-100 text-gray-800"
-                    }`}
-                  >
-                    {run.conclusion || run.status}
-                  </span>
-                </div>
-                <div className="mt-4 text-sm text-gray-500">
-                  Started: {new Date(run.created_at).toLocaleString()}
-                </div>
-              </a>
+                  <div className="mt-4 text-sm text-gray-500">
+                    Started: {new Date(run.created_at).toLocaleString()}
+                  </div>
+                </button>
+
+                {expandedRun === run.id && (
+                  <div className="border-t border-gray-200 p-6">
+                    {loadingJobs[run.id] ? (
+                      <div className="flex justify-center py-4">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900"></div>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {jobDetails[run.id]?.map((job) => (
+                          <div
+                            key={job.id}
+                            className="border rounded-lg p-4 bg-gray-50"
+                          >
+                            <div className="flex items-center justify-between mb-2">
+                              <h4 className="font-medium">{job.name}</h4>
+                              <div className="flex items-center space-x-2">
+                                <span
+                                  className={`px-2 py-1 text-xs rounded-full ${
+                                    job.conclusion === "success"
+                                      ? "bg-green-100 text-green-800"
+                                      : job.conclusion === "failure"
+                                      ? "bg-red-100 text-red-800"
+                                      : "bg-gray-100 text-gray-800"
+                                  }`}
+                                >
+                                  {job.conclusion}
+                                </span>
+                                <span className="text-xs text-gray-500">
+                                  {formatDuration(
+                                    job.started_at,
+                                    job.completed_at
+                                  )}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="space-y-2">
+                              {job.steps.map((step) => (
+                                <div
+                                  key={step.number}
+                                  className="text-sm flex items-center justify-between"
+                                >
+                                  <span>{step.name}</span>
+                                  <span
+                                    className={`px-2 py-0.5 text-xs rounded-full ${
+                                      step.conclusion === "success"
+                                        ? "bg-green-100 text-green-800"
+                                        : step.conclusion === "failure"
+                                        ? "bg-red-100 text-red-800"
+                                        : "bg-gray-100 text-gray-800"
+                                    }`}
+                                  >
+                                    {step.conclusion}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                        <div className="flex justify-end">
+                          <a
+                            href={run.html_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm text-gray-600 hover:text-gray-900"
+                          >
+                            View on GitHub →
+                          </a>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             ))}
             {workflowRuns.length === 0 && (
               <div className="text-center py-12 bg-white rounded-lg">
