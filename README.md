@@ -17,3 +17,4 @@ bun dev
 TODO:
 
 - [x] Add option to download workflow artifacts
+- [x] Sort repository list by public/private and then by name
