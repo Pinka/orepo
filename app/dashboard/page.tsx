@@ -35,10 +35,9 @@ const SectionHeader = ({
 
   return (
     <button
-      type="button"
       onClick={onToggle}
       className="w-full flex items-center justify-between text-xl font-semibold text-gray-900 mb-4 group bg-white border border-gray-200 p-4 rounded-lg hover:bg-gray-50 transition-colors duration-200"
-      aria-expanded={isExpanded.toString()}
+      aria-expanded={isExpanded}
       aria-controls={sectionId}
     >
       <div className="flex items-center">
