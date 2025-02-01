@@ -56,6 +56,13 @@ interface RouteParams {
   [key: string]: string | string[] | undefined;
 }
 
+interface Artifact {
+  id: number;
+  name: string;
+  size_in_bytes: number;
+  archive_download_url: string;
+}
+
 export default function BuildHistoryPage() {
   const { data: session } = useSession() as {
     data: ExtendedSession | null;
@@ -79,6 +86,10 @@ export default function BuildHistoryPage() {
   );
   const [stepLogs, setStepLogs] = useState<Record<string, string>>({});
   const [loadingSteps, setLoadingSteps] = useState<Record<string, boolean>>({});
+  const [artifacts, setArtifacts] = useState<Record<number, Artifact[]>>({});
+  const [loadingArtifacts, setLoadingArtifacts] = useState<
+    Record<number, boolean>
+  >({});
 
   const page = Number(searchParams.get("page")) || 1;
   const per_page = 10;
@@ -139,6 +150,33 @@ export default function BuildHistoryPage() {
     }
   };
 
+  const fetchArtifacts = async (runId: number) => {
+    if (!session?.accessToken) return;
+
+    setLoadingArtifacts((prev) => ({ ...prev, [runId]: true }));
+
+    try {
+      const octokit = new Octokit({
+        auth: session.accessToken,
+      });
+
+      const response = await octokit.actions.listWorkflowRunArtifacts({
+        owner: params.owner,
+        repo: params.name,
+        run_id: runId,
+      });
+
+      setArtifacts((prev) => ({
+        ...prev,
+        [runId]: response.data.artifacts,
+      }));
+    } catch (error) {
+      console.error("Error fetching artifacts:", error);
+    } finally {
+      setLoadingArtifacts((prev) => ({ ...prev, [runId]: false }));
+    }
+  };
+
   const handleRunClick = async (runId: number) => {
     if (expandedRun === runId) {
       setExpandedRun(null);
@@ -146,6 +184,9 @@ export default function BuildHistoryPage() {
       setExpandedRun(runId);
       if (!jobDetails[runId]) {
         await fetchJobDetails(runId);
+      }
+      if (!artifacts[runId]) {
+        await fetchArtifacts(runId);
       }
     }
   };
@@ -216,6 +257,32 @@ export default function BuildHistoryPage() {
 
     if (!stepLogs[stepKey]) {
       await fetchStepLogs(runId, jobId, stepNumber);
+    }
+  };
+
+  const downloadArtifact = async (artifactUrl: string) => {
+    if (!session?.accessToken) return;
+
+    try {
+      const response = await fetch(artifactUrl, {
+        headers: {
+          Authorization: `Bearer ${session.accessToken}`,
+        },
+      });
+
+      if (!response.ok) throw new Error("Download failed");
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "artifact.zip";
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error("Error downloading artifact:", error);
     }
   };
 
@@ -464,6 +531,65 @@ export default function BuildHistoryPage() {
                             </div>
                           </div>
                         ))}
+                        <div className="mt-6 border-t border-gray-200 pt-6">
+                          <h3 className="text-lg font-medium text-gray-900">
+                            Artifacts
+                          </h3>
+                          {loadingArtifacts[run.id] ? (
+                            <div className="flex justify-center py-4">
+                              <div className="animate-spin rounded-full h-6 w-6 border-2 border-gray-900 border-b-transparent"></div>
+                            </div>
+                          ) : artifacts[run.id]?.length > 0 ? (
+                            <div className="mt-4 space-y-4">
+                              {artifacts[run.id].map((artifact) => (
+                                <div
+                                  key={artifact.id}
+                                  className="flex items-center justify-between bg-white p-4 rounded-lg border border-gray-200"
+                                >
+                                  <div>
+                                    <h4 className="font-medium text-gray-900">
+                                      {artifact.name}
+                                    </h4>
+                                    <p className="text-sm text-gray-500">
+                                      Size:{" "}
+                                      {Math.round(
+                                        artifact.size_in_bytes / 1024
+                                      )}{" "}
+                                      KB
+                                    </p>
+                                  </div>
+                                  <button
+                                    onClick={() =>
+                                      downloadArtifact(
+                                        artifact.archive_download_url
+                                      )
+                                    }
+                                    className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                  >
+                                    <svg
+                                      className="w-4 h-4 mr-2"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                                      />
+                                    </svg>
+                                    Download
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="mt-4 text-gray-600">
+                              No artifacts available for this run
+                            </p>
+                          )}
+                        </div>
                         <div className="flex justify-end">
                           <a
                             href={run.html_url}
