@@ -11,7 +11,7 @@ interface Repository {
   name: string;
   full_name: string;
   private: boolean;
-  updated_at: string;
+  updated_at: string | null;
   html_url: string;
   description: string | null;
 }
@@ -30,36 +30,41 @@ const SectionHeader = ({
   count: number;
   isExpanded: boolean;
   onToggle: () => void;
-}) => (
-  <button
-    onClick={onToggle}
-    className="w-full flex items-center justify-between text-xl font-semibold text-gray-900 mb-4 group bg-white border border-gray-200 p-4 rounded-lg hover:bg-gray-50 transition-colors duration-200"
-    aria-expanded={isExpanded}
-    aria-controls={`${title.toLowerCase()}-repos`}
-  >
-    <div className="flex items-center">
-      <svg
-        className={`w-5 h-5 transform transition-transform duration-200 mr-2 text-gray-500 ${
-          isExpanded ? "rotate-180" : ""
-        }`}
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-        aria-hidden="true"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M19 9l-7 7-7-7"
-        />
-      </svg>
-      <span>
-        {title} <span className="text-gray-500">({count})</span>
-      </span>
-    </div>
-  </button>
-);
+}) => {
+  const sectionId = `${title.toLowerCase().replace(/\s+/g, "-")}-repos`;
+
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      className="w-full flex items-center justify-between text-xl font-semibold text-gray-900 mb-4 group bg-white border border-gray-200 p-4 rounded-lg hover:bg-gray-50 transition-colors duration-200"
+      aria-expanded={isExpanded.toString()}
+      aria-controls={sectionId}
+    >
+      <div className="flex items-center">
+        <svg
+          className={`w-5 h-5 transform transition-transform duration-200 mr-2 text-gray-500 ${
+            isExpanded ? "rotate-180" : ""
+          }`}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M19 9l-7 7-7-7"
+          />
+        </svg>
+        <span>
+          {title} <span className="text-gray-500">({count})</span>
+        </span>
+      </div>
+    </button>
+  );
+};
 
 export default function DashboardPage() {
   const { data: session } = useSession() as { data: ExtendedSession | null };
@@ -143,6 +148,7 @@ export default function DashboardPage() {
             Your Repositories
           </h1>
           <button
+            type="button"
             onClick={() => signOut()}
             className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-gray-800 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
           >
