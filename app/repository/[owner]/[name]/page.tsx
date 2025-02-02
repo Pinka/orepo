@@ -545,75 +545,110 @@ export default function BuildHistoryPage() {
                                   Artifacts
                                 </h3>
                                 <div className="mt-4 space-y-4">
-                                  {artifacts[run.id].map((artifact) => (
-                                    <div
-                                      key={artifact.id}
-                                      className="flex items-center justify-between bg-white p-4 rounded-lg border border-gray-200"
-                                    >
-                                      <div>
-                                        <h4 className="font-medium text-gray-900">
-                                          {artifact.name}
-                                        </h4>
-                                        <p className="text-sm text-gray-500">
-                                          Size:{" "}
-                                          {Math.round(
-                                            artifact.size_in_bytes / 1024
-                                          )}{" "}
-                                          KB
-                                        </p>
-                                      </div>
-                                      <div className="flex items-center space-x-4">
-                                        {artifact.name
-                                          .toLowerCase()
-                                          .includes("playwright") &&
-                                          (artifact.size_in_bytes <=
-                                          MAX_ARTIFACT_SIZE ? (
-                                            <a
-                                              href={`/playwright-report/${
-                                                artifact.id
-                                              }?owner=${encodeURIComponent(
-                                                params.owner
-                                              )}&repo=${encodeURIComponent(
-                                                params.name
-                                              )}`}
-                                              className="inline-flex items-center text-sm font-medium text-gray-700 hover:text-gray-900"
-                                            >
-                                              View Report
-                                            </a>
-                                          ) : (
-                                            <span
-                                              className="inline-flex items-center text-sm font-medium text-gray-400 cursor-not-allowed"
-                                              title="Report is too large to view (>100MB). Please download instead."
-                                            >
-                                              View Report
-                                            </span>
-                                          ))}
-                                        <button
-                                          onClick={() =>
-                                            downloadArtifact(
-                                              artifact.archive_download_url
-                                            )
-                                          }
-                                          className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                                        >
-                                          <svg
-                                            className="w-4 h-4 mr-2"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
+                                  {artifacts[run.id].map((artifact) => {
+                                    const isPlaywrightReport = artifact.name
+                                      .toLowerCase()
+                                      .includes("playwright");
+                                    const canViewReport =
+                                      isPlaywrightReport &&
+                                      artifact.size_in_bytes <=
+                                        MAX_ARTIFACT_SIZE;
+                                    const reportUrl = canViewReport
+                                      ? `/playwright-report/${
+                                          artifact.id
+                                        }?owner=${encodeURIComponent(
+                                          params.owner
+                                        )}&repo=${encodeURIComponent(
+                                          params.name
+                                        )}`
+                                      : undefined;
+
+                                    return (
+                                      <div
+                                        key={artifact.id}
+                                        className={`flex items-center justify-between bg-white p-4 rounded-lg border border-gray-200 ${
+                                          canViewReport
+                                            ? "hover:shadow-md transition-shadow duration-200"
+                                            : ""
+                                        }`}
+                                      >
+                                        {canViewReport ? (
+                                          <a
+                                            href={reportUrl}
+                                            className="flex items-center justify-between w-full"
+                                            aria-label={`View Playwright report: ${artifact.name}`}
                                           >
-                                            <path
-                                              strokeLinecap="round"
-                                              strokeLinejoin="round"
-                                              strokeWidth={2}
-                                              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                                            />
-                                          </svg>
-                                          Download
-                                        </button>
+                                            <div>
+                                              <h4 className="font-medium text-gray-900 hover:text-gray-700">
+                                                {artifact.name}
+                                              </h4>
+                                              <p className="text-sm text-gray-500">
+                                                Size:{" "}
+                                                {Math.round(
+                                                  artifact.size_in_bytes / 1024
+                                                )}{" "}
+                                                KB
+                                              </p>
+                                            </div>
+                                            <div className="flex items-center space-x-4">
+                                              <span className="inline-flex items-center text-sm font-medium text-gray-700 hover:text-gray-900">
+                                                View Report
+                                              </span>
+                                            </div>
+                                          </a>
+                                        ) : (
+                                          <>
+                                            <div>
+                                              <h4 className="font-medium text-gray-900">
+                                                {artifact.name}
+                                              </h4>
+                                              <p className="text-sm text-gray-500">
+                                                Size:{" "}
+                                                {Math.round(
+                                                  artifact.size_in_bytes / 1024
+                                                )}{" "}
+                                                KB
+                                              </p>
+                                            </div>
+                                            <div className="flex items-center space-x-4">
+                                              {isPlaywrightReport && (
+                                                <span
+                                                  className="inline-flex items-center text-sm font-medium text-gray-400 cursor-not-allowed"
+                                                  title="Report is too large to view (>100MB). Please download instead."
+                                                >
+                                                  View Report
+                                                </span>
+                                              )}
+                                              <button
+                                                onClick={() =>
+                                                  downloadArtifact(
+                                                    artifact.archive_download_url
+                                                  )
+                                                }
+                                                className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                                aria-label={`Download ${artifact.name}`}
+                                              >
+                                                <svg
+                                                  className="w-4 h-4 mr-2"
+                                                  fill="none"
+                                                  stroke="currentColor"
+                                                  viewBox="0 0 24 24"
+                                                >
+                                                  <path
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    strokeWidth={2}
+                                                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                                                  />
+                                                </svg>
+                                                Download
+                                              </button>
+                                            </div>
+                                          </>
+                                        )}
                                       </div>
-                                    </div>
-                                  ))}
+                                    );
+                                  })}
                                 </div>
                               </>
                             )}
