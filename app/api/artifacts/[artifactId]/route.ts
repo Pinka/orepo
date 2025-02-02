@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/config";
 import { Octokit } from "@octokit/rest";
@@ -6,12 +6,6 @@ import { mkdir, access, constants } from "fs/promises";
 import { join } from "path";
 import AdmZip from "adm-zip";
 import { MAX_ARTIFACT_SIZE } from "@/lib/constants";
-
-interface RouteParams {
-  params: {
-    artifactId: string;
-  };
-}
 
 async function reportExists(path: string): Promise<boolean> {
   try {
@@ -22,7 +16,10 @@ async function reportExists(path: string): Promise<boolean> {
   }
 }
 
-export async function GET(request: Request, { params }: RouteParams) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { artifactId: string } }
+) {
   const session = await getServerSession(authOptions);
   if (!session?.accessToken) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
