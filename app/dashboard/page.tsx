@@ -1,7 +1,7 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Octokit } from "@octokit/rest";
 import { signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -75,6 +75,7 @@ export default function DashboardPage() {
     public: true,
     private: false,
   });
+  const catUrl = useMemo(() => `https://cataas.com/cat?${Date.now()}`, []);
 
   useEffect(() => {
     async function fetchRepositories() {
@@ -144,7 +145,7 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-gray-50">
       <div className="w-full relative h-48">
         <Image
-          src={`https://cataas.com/cat?${Date.now()}`}
+          src={catUrl}
           alt="Random Cat"
           fill
           className="object-cover rounded-b-lg"

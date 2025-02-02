@@ -590,7 +590,7 @@ export default function BuildHistoryPage() {
                             </p>
                           )}
                         </div>
-                        <div className="flex justify-end">
+                        <div className="flex justify-end space-x-4">
                           <a
                             href={run.html_url}
                             target="_blank"
@@ -598,6 +598,27 @@ export default function BuildHistoryPage() {
                             className="inline-flex items-center text-sm font-medium text-gray-700 hover:text-gray-900"
                           >
                             View on GitHub
+                            <svg
+                              className="ml-1 w-4 h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                              />
+                            </svg>
+                          </a>
+                          <a
+                            href={`/playwright-report/${run.id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center text-sm font-medium text-gray-700 hover:text-gray-900"
+                          >
+                            View Report
                             <svg
                               className="ml-1 w-4 h-4"
                               fill="none"
