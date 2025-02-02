@@ -2,10 +2,19 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/config";
 import { Octokit } from "@octokit/rest";
-import { mkdir } from "fs/promises";
+import { mkdir, access, constants } from "fs/promises";
 import { join } from "path";
 import AdmZip from "adm-zip";
 import { MAX_ARTIFACT_SIZE } from "@/lib/constants";
+
+async function reportExists(path: string): Promise<boolean> {
+  try {
+    await access(join(path, "index.html"), constants.F_OK);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 export async function GET(
   request: Request,
@@ -46,6 +55,16 @@ export async function GET(
       );
     }
 
+    // Check if report already exists
+    const reportsDir = join(process.cwd(), "public", "playwright-reports");
+    const extractPath = join(reportsDir, params.artifactId);
+
+    if (await reportExists(extractPath)) {
+      return NextResponse.json({
+        url: `/playwright-reports/${params.artifactId}/index.html`,
+      });
+    }
+
     // Download the artifact
     const response = await fetch(artifact.archive_download_url, {
       headers: {
@@ -58,8 +77,6 @@ export async function GET(
     }
 
     // Create the reports directory if it doesn't exist
-    const reportsDir = join(process.cwd(), "public", "playwright-reports");
-    const extractPath = join(reportsDir, params.artifactId);
     await mkdir(extractPath, { recursive: true });
 
     // Get the zip content as a buffer
