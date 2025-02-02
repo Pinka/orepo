@@ -7,11 +7,10 @@ import { join } from "path";
 import AdmZip from "adm-zip";
 import { MAX_ARTIFACT_SIZE } from "@/lib/constants";
 
-type RouteContext = {
+type Props = {
   params: {
     artifactId: string;
   };
-  searchParams: { [key: string]: string | string[] | undefined };
 };
 
 async function reportExists(path: string): Promise<boolean> {
@@ -23,7 +22,7 @@ async function reportExists(path: string): Promise<boolean> {
   }
 }
 
-export async function GET(request: NextRequest, { params }: RouteContext) {
+export async function GET(request: NextRequest, { params }: Props) {
   const { artifactId } = params;
   const session = await getServerSession(authOptions);
   if (!session?.accessToken) {
