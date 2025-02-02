@@ -7,6 +7,12 @@ import { join } from "path";
 import AdmZip from "adm-zip";
 import { MAX_ARTIFACT_SIZE } from "@/lib/constants";
 
+type RouteSegment = {
+  params: {
+    artifactId: string;
+  };
+};
+
 async function reportExists(path: string): Promise<boolean> {
   try {
     await access(join(path, "index.html"), constants.F_OK);
@@ -16,10 +22,8 @@ async function reportExists(path: string): Promise<boolean> {
   }
 }
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { artifactId: string } }
-) {
+export async function GET(request: NextRequest, context: RouteSegment) {
+  const { artifactId } = context.params;
   const session = await getServerSession(authOptions);
   if (!session?.accessToken) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -44,7 +48,7 @@ export async function GET(
     const { data: artifact } = await octokit.rest.actions.getArtifact({
       owner,
       repo,
-      artifact_id: Number(params.artifactId),
+      artifact_id: Number(artifactId),
     });
 
     // Check artifact size
@@ -57,11 +61,11 @@ export async function GET(
 
     // Check if report already exists
     const reportsDir = join(process.cwd(), "public", "playwright-reports");
-    const extractPath = join(reportsDir, params.artifactId);
+    const extractPath = join(reportsDir, artifactId);
 
     if (await reportExists(extractPath)) {
       return NextResponse.json({
-        url: `/playwright-reports/${params.artifactId}/index.html`,
+        url: `/playwright-reports/${artifactId}/index.html`,
       });
     }
 
@@ -89,7 +93,7 @@ export async function GET(
 
     // Return the URL to the extracted report
     return NextResponse.json({
-      url: `/playwright-reports/${params.artifactId}/index.html`,
+      url: `/playwright-reports/${artifactId}/index.html`,
     });
   } catch (error) {
     console.error("Error processing artifact:", error);
