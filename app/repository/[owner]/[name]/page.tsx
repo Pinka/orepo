@@ -563,7 +563,13 @@ export default function BuildHistoryPage() {
                                       .toLowerCase()
                                       .includes("playwright") && (
                                       <a
-                                        href={`/playwright-report/${run.id}-${artifact.id}`}
+                                        href={`/playwright-report/${
+                                          artifact.id
+                                        }?owner=${encodeURIComponent(
+                                          params.owner
+                                        )}&repo=${encodeURIComponent(
+                                          params.name
+                                        )}`}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="inline-flex items-center text-sm font-medium text-gray-700 hover:text-gray-900"
