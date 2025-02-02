@@ -4,7 +4,6 @@ import { useSession } from "next-auth/react";
 import { useEffect, useState, useCallback } from "react";
 import { Octokit } from "@octokit/rest";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
-import Link from "next/link";
 import type { Session } from "next-auth";
 import { MAX_ARTIFACT_SIZE } from "@/lib/constants";
 
