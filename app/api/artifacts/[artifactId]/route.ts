@@ -7,6 +7,12 @@ import { join } from "path";
 import AdmZip from "adm-zip";
 import { MAX_ARTIFACT_SIZE } from "@/lib/constants";
 
+interface RouteParams {
+  params: {
+    artifactId: string;
+  };
+}
+
 async function reportExists(path: string): Promise<boolean> {
   try {
     await access(join(path, "index.html"), constants.F_OK);
@@ -16,10 +22,7 @@ async function reportExists(path: string): Promise<boolean> {
   }
 }
 
-export async function GET(
-  request: Request,
-  { params }: { params: { artifactId: string } }
-) {
+export async function GET(request: Request, { params }: RouteParams) {
   const session = await getServerSession(authOptions);
   if (!session?.accessToken) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
