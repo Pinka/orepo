@@ -1,7 +1,7 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Octokit } from "@octokit/rest";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
@@ -95,34 +95,48 @@ export default function BuildHistoryPage() {
   const page = Number(searchParams.get("page")) || 1;
   const per_page = 10;
 
-  useEffect(() => {
+  const fetchWorkflowRuns = useCallback(async () => {
     if (session?.accessToken) {
       const octokit = new Octokit({
         auth: session.accessToken,
       });
 
-      octokit.actions
-        .listWorkflowRunsForRepo({
+      try {
+        const response = await octokit.actions.listWorkflowRunsForRepo({
           owner: params.owner,
           repo: params.name,
           per_page,
           page,
-        })
-        .then((response) => {
-          setWorkflowRuns(response.data.workflow_runs);
-          setPagination({
-            total_count: response.data.total_count,
-            current_page: page,
-            total_pages: Math.ceil(response.data.total_count / per_page),
-          });
-          setLoading(false);
-        })
-        .catch((error: Error) => {
-          console.error("Error fetching workflow runs:", error);
-          setLoading(false);
         });
+
+        setWorkflowRuns(response.data.workflow_runs);
+        setPagination({
+          total_count: response.data.total_count,
+          current_page: page,
+          total_pages: Math.ceil(response.data.total_count / per_page),
+        });
+      } catch (error) {
+        console.error("Error fetching workflow runs:", error);
+      } finally {
+        setLoading(false);
+      }
     }
   }, [session, params, page]);
+
+  useEffect(() => {
+    fetchWorkflowRuns();
+  }, [fetchWorkflowRuns]);
+
+  // Poll for updates every 10 seconds
+  useEffect(() => {
+    if (!session?.accessToken) return;
+
+    const pollInterval = setInterval(() => {
+      fetchWorkflowRuns();
+    }, 10000);
+
+    return () => clearInterval(pollInterval);
+  }, [fetchWorkflowRuns, session?.accessToken]);
 
   const fetchJobDetails = async (runId: number) => {
     if (!session?.accessToken) return;
