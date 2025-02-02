@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/config";
 import { Octokit } from "@octokit/rest";
+import { mkdir } from "fs/promises";
+import { join } from "path";
+import AdmZip from "adm-zip";
 
 export async function GET(
   request: Request,
@@ -27,14 +30,14 @@ export async function GET(
   const octokit = new Octokit({ auth: session.accessToken });
 
   try {
-    // First get the artifact details to get the download URL
+    // Get artifact details
     const { data: artifact } = await octokit.rest.actions.getArtifact({
       owner,
       repo,
       artifact_id: Number(params.artifactId),
     });
 
-    // Now download using the official archive_download_url
+    // Download the artifact
     const response = await fetch(artifact.archive_download_url, {
       headers: {
         Authorization: `Bearer ${session.accessToken}`,
@@ -42,23 +45,30 @@ export async function GET(
     });
 
     if (!response.ok) {
-      return NextResponse.json(
-        { error: "Failed to fetch artifact from GitHub" },
-        { status: response.status }
-      );
+      throw new Error("Failed to download artifact");
     }
 
-    const buffer = await response.arrayBuffer();
-    return new NextResponse(buffer, {
-      headers: {
-        "Content-Type": "application/zip",
-        "Content-Disposition": `attachment; filename=${artifact.name}.zip`,
-      },
+    // Create the reports directory if it doesn't exist
+    const reportsDir = join(process.cwd(), "public", "playwright-reports");
+    const extractPath = join(reportsDir, params.artifactId);
+    await mkdir(extractPath, { recursive: true });
+
+    // Get the zip content as a buffer
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    // Extract using adm-zip
+    const zip = new AdmZip(buffer);
+    zip.extractAllTo(extractPath, true);
+
+    // Return the URL to the extracted report
+    return NextResponse.json({
+      url: `/playwright-reports/${params.artifactId}/index.html`,
     });
   } catch (error) {
-    console.error("Error fetching artifact:", error);
+    console.error("Error processing artifact:", error);
     return NextResponse.json(
-      { error: "Failed to fetch artifact details" },
+      { error: "Failed to process artifact" },
       { status: 500 }
     );
   }

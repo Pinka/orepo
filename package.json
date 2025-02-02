@@ -8,11 +8,14 @@
     "start": "next start",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "cleanup-reports": "ts-node scripts/cleanup-reports.ts"
   },
   "dependencies": {
     "@auth/core": "^0.34.2",
     "@octokit/rest": "^21.1.0",
+    "@types/unzipper": "^0.10.10",
+    "adm-zip": "^0.5.16",
     "jszip": "^3.10.1",
     "next": "15.1.6",
     "next-auth": "^4.24.11",
@@ -22,6 +25,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@playwright/test": "^1.50.1",
+    "@types/adm-zip": "^0.5.7",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

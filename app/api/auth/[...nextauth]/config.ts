@@ -11,6 +11,13 @@ interface ExtendedToken extends JWT {
   accessToken?: string;
 }
 
+// Add this type declaration
+declare module "next-auth" {
+  interface Session {
+    accessToken?: string;
+  }
+}
+
 export const authOptions: NextAuthOptions = {
   providers: [
     GithubProvider({
