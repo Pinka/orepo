@@ -1,11 +1,10 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Octokit } from "@octokit/rest";
-import { signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
+import Header from "@/app/components/Header";
 
 interface Repository {
   id: number;
@@ -75,7 +74,6 @@ export default function DashboardPage() {
     public: true,
     private: false,
   });
-  const catUrl = useMemo(() => `https://cataas.com/cat?${Date.now()}`, []);
 
   useEffect(() => {
     async function fetchRepositories() {
@@ -143,29 +141,7 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="w-full relative h-48">
-        <Image
-          src={catUrl}
-          alt="Random Cat"
-          fill
-          className="object-cover rounded-b-lg"
-          unoptimized
-        />
-      </div>
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">
-            Your Repositories
-          </h1>
-          <button
-            type="button"
-            onClick={() => signOut()}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-gray-800 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-          >
-            Sign Out
-          </button>
-        </div>
-      </header>
+      <Header title="Your Repositories" showSignOut />
 
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
