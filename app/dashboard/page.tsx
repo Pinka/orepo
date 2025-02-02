@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { Octokit } from "@octokit/rest";
 import { signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 interface Repository {
   id: number;
@@ -141,11 +142,13 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="w-full">
-        <img
+      <div className="w-full relative h-48">
+        <Image
           src={`https://cataas.com/cat?${Date.now()}`}
           alt="Random Cat"
-          className="w-full h-48 object-cover rounded-b-lg"
+          fill
+          className="object-cover rounded-b-lg"
+          unoptimized
         />
       </div>
       <header className="bg-white shadow">
