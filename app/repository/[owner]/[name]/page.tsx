@@ -272,6 +272,20 @@ export default function BuildHistoryPage() {
 
     if (!stepLogs[stepKey]) {
       await fetchStepLogs(runId, jobId, stepNumber);
+      // Scroll to bottom after logs are loaded and expanded
+      setTimeout(() => {
+        const logElement = document.querySelector<HTMLElement>(
+          `#log-${stepKey}`
+        );
+        if (logElement) {
+          window.scrollTo(
+            0,
+            logElement.offsetTop +
+              logElement.offsetHeight -
+              document.documentElement.clientHeight
+          );
+        }
+      }, 100);
     }
   };
 
@@ -530,7 +544,10 @@ export default function BuildHistoryPage() {
                                               ).toLocaleString()}
                                             </div>
                                           </div>
-                                          <div className="bg-gray-900 text-gray-100 rounded-md p-4 font-mono text-sm overflow-x-auto">
+                                          <div
+                                            id={`log-${run.id}-${job.id}-${step.number}`}
+                                            className="bg-gray-900 text-gray-100 rounded-md p-4 font-mono text-sm overflow-x-auto"
+                                          >
                                             <pre className="whitespace-pre-wrap">
                                               {stepLogs[
                                                 `${run.id}-${job.id}-${step.number}`
