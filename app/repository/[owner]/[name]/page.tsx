@@ -531,99 +531,99 @@ export default function BuildHistoryPage() {
                             </div>
                           </div>
                         ))}
-                        <div className="mt-6 border-t border-gray-200 pt-6">
-                          <h3 className="text-lg font-medium text-gray-900">
-                            Artifacts
-                          </h3>
-                          {loadingArtifacts[run.id] ? (
-                            <div className="flex justify-center py-4">
-                              <div className="animate-spin rounded-full h-6 w-6 border-2 border-gray-900 border-b-transparent"></div>
-                            </div>
-                          ) : artifacts[run.id]?.length > 0 ? (
-                            <div className="mt-4 space-y-4">
-                              {artifacts[run.id].map((artifact) => (
-                                <div
-                                  key={artifact.id}
-                                  className="flex items-center justify-between bg-white p-4 rounded-lg border border-gray-200"
-                                >
-                                  <div>
-                                    <h4 className="font-medium text-gray-900">
-                                      {artifact.name}
-                                    </h4>
-                                    <p className="text-sm text-gray-500">
-                                      Size:{" "}
-                                      {Math.round(
-                                        artifact.size_in_bytes / 1024
-                                      )}{" "}
-                                      KB
-                                    </p>
-                                  </div>
-                                  <div className="flex items-center space-x-2">
-                                    {artifact.name
-                                      .toLowerCase()
-                                      .includes("playwright") && (
-                                      <a
-                                        href={`/playwright-report/${
-                                          artifact.id
-                                        }?owner=${encodeURIComponent(
-                                          params.owner
-                                        )}&repo=${encodeURIComponent(
-                                          params.name
-                                        )}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="inline-flex items-center text-sm font-medium text-gray-700 hover:text-gray-900"
-                                      >
-                                        View Report
-                                        <svg
-                                          className="ml-1 w-4 h-4"
-                                          fill="none"
-                                          stroke="currentColor"
-                                          viewBox="0 0 24 24"
-                                        >
-                                          <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth={2}
-                                            d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                                          />
-                                        </svg>
-                                      </a>
-                                    )}
-                                    <button
-                                      onClick={() =>
-                                        downloadArtifact(
-                                          artifact.archive_download_url
-                                        )
-                                      }
-                                      className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                        {artifacts[run.id] && artifacts[run.id].length > 0 && (
+                          <div className="mt-6 border-t border-gray-200 pt-6">
+                            {loadingArtifacts[run.id] ? (
+                              <div className="flex justify-center py-4">
+                                <div className="animate-spin rounded-full h-6 w-6 border-2 border-gray-900 border-b-transparent"></div>
+                              </div>
+                            ) : (
+                              <>
+                                <h3 className="text-lg font-medium text-gray-900 mb-4">
+                                  Artifacts
+                                </h3>
+                                <div className="mt-4 space-y-4">
+                                  {artifacts[run.id].map((artifact) => (
+                                    <div
+                                      key={artifact.id}
+                                      className="flex items-center justify-between bg-white p-4 rounded-lg border border-gray-200"
                                     >
-                                      <svg
-                                        className="w-4 h-4 mr-2"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                      >
-                                        <path
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                          strokeWidth={2}
-                                          d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                                        />
-                                      </svg>
-                                      Download
-                                    </button>
-                                  </div>
+                                      <div>
+                                        <h4 className="font-medium text-gray-900">
+                                          {artifact.name}
+                                        </h4>
+                                        <p className="text-sm text-gray-500">
+                                          Size:{" "}
+                                          {Math.round(
+                                            artifact.size_in_bytes / 1024
+                                          )}{" "}
+                                          KB
+                                        </p>
+                                      </div>
+                                      <div className="flex items-center space-x-4">
+                                        {artifact.name
+                                          .toLowerCase()
+                                          .includes("playwright") && (
+                                          <a
+                                            href={`/playwright-report/${
+                                              artifact.id
+                                            }?owner=${encodeURIComponent(
+                                              params.owner
+                                            )}&repo=${encodeURIComponent(
+                                              params.name
+                                            )}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="inline-flex items-center text-sm font-medium text-gray-700 hover:text-gray-900"
+                                          >
+                                            View Report
+                                            <svg
+                                              className="ml-1 w-4 h-4"
+                                              fill="none"
+                                              stroke="currentColor"
+                                              viewBox="0 0 24 24"
+                                            >
+                                              <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                                              />
+                                            </svg>
+                                          </a>
+                                        )}
+                                        <button
+                                          onClick={() =>
+                                            downloadArtifact(
+                                              artifact.archive_download_url
+                                            )
+                                          }
+                                          className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                        >
+                                          <svg
+                                            className="w-4 h-4 mr-2"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                          >
+                                            <path
+                                              strokeLinecap="round"
+                                              strokeLinejoin="round"
+                                              strokeWidth={2}
+                                              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                                            />
+                                          </svg>
+                                          Download
+                                        </button>
+                                      </div>
+                                    </div>
+                                  ))}
                                 </div>
-                              ))}
-                            </div>
-                          ) : (
-                            <p className="mt-4 text-gray-600">
-                              No artifacts available for this run
-                            </p>
-                          )}
-                        </div>
-                        <div className="flex justify-end">
+                              </>
+                            )}
+                          </div>
+                        )}
+                        <div className="flex justify-end mt-4">
                           <a
                             href={run.html_url}
                             target="_blank"
