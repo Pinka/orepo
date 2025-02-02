@@ -1,28 +1,22 @@
 import Image from "next/image";
 import Link from "next/link";
-import { signOut } from "next-auth/react";
-import { useMemo } from "react";
 
 interface HeaderProps {
   title: string;
   showBackButton?: boolean;
   backHref?: string;
-  showSignOut?: boolean;
 }
 
 export default function Header({
   title,
   showBackButton = false,
   backHref = "/dashboard",
-  showSignOut = false,
 }: HeaderProps) {
-  const catUrl = useMemo(() => `https://cataas.com/cat?${Date.now()}`, []);
-
   return (
     <>
       <div className="w-full relative h-48">
         <Image
-          src={catUrl}
+          src={`https://cataas.com/cat?t=${Date.now()}`}
           alt="Random Cat"
           fill
           className="object-cover"
@@ -57,15 +51,14 @@ export default function Header({
               )}
               <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
             </div>
-            {showSignOut && (
+            <form action="/api/auth/signout" method="POST">
               <button
-                type="button"
-                onClick={() => signOut()}
+                type="submit"
                 className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-gray-800 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
               >
                 Sign Out
               </button>
-            )}
+            </form>
           </div>
         </div>
       </header>
