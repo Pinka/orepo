@@ -9,7 +9,7 @@ import { MAX_ARTIFACT_SIZE } from "@/lib/constants";
 
 type Props = {
   params: {
-    artifactId: string;
+    artifactId: Promise<string>;
   };
 };
 
@@ -23,27 +23,26 @@ async function reportExists(path: string): Promise<boolean> {
 }
 
 export async function GET(request: NextRequest, { params }: Props) {
-  const { artifactId } = params;
-  const session = await getServerSession(authOptions);
-  if (!session?.accessToken) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  // Extract 'owner' and 'repo' from the request URL's query parameters
-  const { searchParams } = new URL(request.url);
-  const owner = searchParams.get("owner");
-  const repo = searchParams.get("repo");
-
-  if (!owner || !repo) {
-    return NextResponse.json(
-      { error: "Missing 'owner' or 'repo' query parameter" },
-      { status: 400 }
-    );
-  }
-
-  const octokit = new Octokit({ auth: session.accessToken });
-
   try {
+    const artifactId = await params.artifactId;
+    const session = await getServerSession(authOptions);
+    if (!session?.accessToken) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const owner = searchParams.get("owner");
+    const repo = searchParams.get("repo");
+
+    if (!owner || !repo) {
+      return NextResponse.json(
+        { error: "Missing 'owner' or 'repo' query parameter" },
+        { status: 400 }
+      );
+    }
+
+    const octokit = new Octokit({ auth: session.accessToken });
+
     // Get artifact details
     const { data: artifact } = await octokit.rest.actions.getArtifact({
       owner,
@@ -63,7 +62,8 @@ export async function GET(request: NextRequest, { params }: Props) {
     const reportsDir = join(process.cwd(), "public", "playwright-reports");
     const extractPath = join(reportsDir, artifactId);
 
-    if (await reportExists(extractPath)) {
+    const exists = await reportExists(extractPath);
+    if (exists) {
       return NextResponse.json({
         url: `/playwright-reports/${artifactId}/index.html`,
       });
@@ -91,7 +91,6 @@ export async function GET(request: NextRequest, { params }: Props) {
     const zip = new AdmZip(buffer);
     zip.extractAllTo(extractPath, true);
 
-    // Return the URL to the extracted report
     return NextResponse.json({
       url: `/playwright-reports/${artifactId}/index.html`,
     });
