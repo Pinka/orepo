@@ -6,6 +6,7 @@ import { Octokit } from "@octokit/rest";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import type { Session } from "next-auth";
+import { MAX_ARTIFACT_SIZE } from "@/lib/constants";
 
 interface ExtendedSession extends Session {
   accessToken?: string;
@@ -563,35 +564,57 @@ export default function BuildHistoryPage() {
                                       <div className="flex items-center space-x-4">
                                         {artifact.name
                                           .toLowerCase()
-                                          .includes("playwright") && (
-                                          <a
-                                            href={`/playwright-report/${
-                                              artifact.id
-                                            }?owner=${encodeURIComponent(
-                                              params.owner
-                                            )}&repo=${encodeURIComponent(
-                                              params.name
-                                            )}`}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="inline-flex items-center text-sm font-medium text-gray-700 hover:text-gray-900"
-                                          >
-                                            View Report
-                                            <svg
-                                              className="ml-1 w-4 h-4"
-                                              fill="none"
-                                              stroke="currentColor"
-                                              viewBox="0 0 24 24"
+                                          .includes("playwright") &&
+                                          (artifact.size_in_bytes <=
+                                          MAX_ARTIFACT_SIZE ? (
+                                            <a
+                                              href={`/playwright-report/${
+                                                artifact.id
+                                              }?owner=${encodeURIComponent(
+                                                params.owner
+                                              )}&repo=${encodeURIComponent(
+                                                params.name
+                                              )}`}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              className="inline-flex items-center text-sm font-medium text-gray-700 hover:text-gray-900"
                                             >
-                                              <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth={2}
-                                                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                                              />
-                                            </svg>
-                                          </a>
-                                        )}
+                                              View Report
+                                              <svg
+                                                className="ml-1 w-4 h-4"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                              >
+                                                <path
+                                                  strokeLinecap="round"
+                                                  strokeLinejoin="round"
+                                                  strokeWidth={2}
+                                                  d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                                                />
+                                              </svg>
+                                            </a>
+                                          ) : (
+                                            <span
+                                              className="inline-flex items-center text-sm font-medium text-gray-400 cursor-not-allowed"
+                                              title="Report is too large to view (>100MB). Please download instead."
+                                            >
+                                              View Report
+                                              <svg
+                                                className="ml-1 w-4 h-4"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                              >
+                                                <path
+                                                  strokeLinecap="round"
+                                                  strokeLinejoin="round"
+                                                  strokeWidth={2}
+                                                  d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                                                />
+                                              </svg>
+                                            </span>
+                                          ))}
                                         <button
                                           onClick={() =>
                                             downloadArtifact(

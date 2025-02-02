@@ -5,6 +5,7 @@ import { Octokit } from "@octokit/rest";
 import { mkdir } from "fs/promises";
 import { join } from "path";
 import AdmZip from "adm-zip";
+import { MAX_ARTIFACT_SIZE } from "@/lib/constants";
 
 export async function GET(
   request: Request,
@@ -36,6 +37,14 @@ export async function GET(
       repo,
       artifact_id: Number(params.artifactId),
     });
+
+    // Check artifact size
+    if (artifact.size_in_bytes > MAX_ARTIFACT_SIZE) {
+      return NextResponse.json(
+        { error: "Artifact is too large to process (>100MB)" },
+        { status: 413 }
+      );
+    }
 
     // Download the artifact
     const response = await fetch(artifact.archive_download_url, {
