@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import Header from "@/app/components/Header";
 import JSZip from "jszip";
@@ -62,7 +62,7 @@ export default function PlaywrightReportViewer() {
   const [ready, setReady] = useState(false);
 
   // setupReport fetches the zip, extracts it, and caches its content
-  const setupReport = async () => {
+  const setupReport = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
@@ -86,7 +86,7 @@ export default function PlaywrightReportViewer() {
       const cache = await caches.open(cacheName);
 
       // Iterate through each file in the zip
-      const filePromises: Promise<any>[] = [];
+      const filePromises: Promise<void>[] = [];
       zip.forEach((relativePath, file) => {
         if (!file.dir) {
           // Remove the "playwright-report/" prefix from paths
@@ -123,7 +123,7 @@ export default function PlaywrightReportViewer() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [artifactId, owner, repo]);
 
   useEffect(() => {
     setupReport();
@@ -133,7 +133,7 @@ export default function PlaywrightReportViewer() {
         caches.delete(`report-${artifactId}`).catch(console.error);
       }
     };
-  }, [artifactId, owner, repo]);
+  }, [artifactId, owner, repo, setupReport]);
 
   if (loading) return <LoadingDisplay />;
   if (error) return <ErrorDisplay error={error} onRetry={setupReport} />;
