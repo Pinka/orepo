@@ -50,3 +50,5 @@ node_modules/
 # Playwright reports
 public/playwright-reports/
 playwright-report/
+
+.vscode/
